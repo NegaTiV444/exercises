@@ -113,7 +113,7 @@ subString start end string =
             | remaining_from_the_end > 1 = go remaining_from_the_start (remaining_from_the_end - 1) (init str)
             | otherwise = str
     in 
-        if end < 0 then "" else go 
+        if (end < 0) || (start > end) then "" else go 
             rem_from_the_start
             (length string - end) 
             string
@@ -153,4 +153,20 @@ and lower than 6 elements (4, 5, 6, 7, 8 and 9).
 🕯 HINT: Use recursion to implement this function.
 -}
 
-lowerAndGreater n list = error "TODO"
+lowerAndGreater :: Int -> [Int] -> String
+lowerAndGreater n1 list1 = 
+    let
+        incTupleWithTwoValues :: Int -> (Int, Int) -> (Int, Int)
+        incTupleWithTwoValues pos (a, b) = if pos == 0 
+            then (a + 1, b)
+            else (a, b + 1) 
+        go :: Int -> [Int] -> (Int, Int) -> (Int, Int)
+        go n list currentState 
+            | null list = currentState
+            | n > head list = go n (tail list) (incTupleWithTwoValues 0 currentState)
+            | n < head list = go n (tail list) (incTupleWithTwoValues 1 currentState)
+            | otherwise = go n (tail list) currentState
+        getResultString :: Int -> (Int, Int) -> String
+        getResultString number (gr, lw) = unwords [show number, "is greater than", show gr, "elements and lower than", show lw, "elements"]
+    in
+        getResultString n1 (go n1 list1 (0, 0))
