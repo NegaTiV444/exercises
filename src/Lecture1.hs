@@ -128,7 +128,15 @@ The string contains only spaces and/or numbers.
 -}
 
 strSum :: [Char] -> Int
-strSum str = error "TODO"
+strSum str = 
+    let
+        wordList = words str;
+        go :: [[Char]] -> Int
+        go list = if null list
+            then 0
+            else (read (head list) :: Int) + go (tail list)
+    in
+        go wordList
 
 
 {- | Write a function that takes a number and a list of numbers and
