@@ -99,7 +99,24 @@ start position can be considered as zero (e.g. substring from the
 first character) and negative end position should result in an empty
 string.
 -}
-subString start end str = take (start, end) str
+
+
+subString :: Int -> Int -> [Char] -> [Char]
+subString start end string = 
+    let 
+        rem_from_the_start = if start < 0
+                then 0
+                else start;
+        go :: Int -> Int -> [Char] -> [Char]
+        go remaining_from_the_start remaining_from_the_end str
+            | remaining_from_the_start > 0 = go (remaining_from_the_start - 1) remaining_from_the_end (tail str)
+            | remaining_from_the_end > 1 = go remaining_from_the_start (remaining_from_the_end - 1) (init str)
+            | otherwise = str
+    in 
+        if end < 0 then "" else go 
+            rem_from_the_start
+            (length string - end) 
+            string
 
 {- | Write a function that takes a String — space separated numbers,
 and finds a sum of the numbers inside this string.
@@ -109,7 +126,10 @@ and finds a sum of the numbers inside this string.
 
 The string contains only spaces and/or numbers.
 -}
+
+strSum :: [Char] -> Int
 strSum str = error "TODO"
+
 
 {- | Write a function that takes a number and a list of numbers and
 returns a string, saying how many elements of the list are strictly
@@ -124,4 +144,5 @@ and lower than 6 elements (4, 5, 6, 7, 8 and 9).
 
 🕯 HINT: Use recursion to implement this function.
 -}
+
 lowerAndGreater n list = error "TODO"
