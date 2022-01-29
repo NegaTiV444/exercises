@@ -35,11 +35,11 @@ module Lecture1
 its behaviour, possible types for the function arguments and write the
 type signature explicitly.
 -}
+makeSnippet :: Int -> [Char] -> [Char]
 makeSnippet limit text = take limit ("Description: " ++ text) ++ "..."
 
 {- | Implement a function that takes two numbers and finds sum of
 their squares.
-
 >>> sumOfSquares 3 4
 25
 
@@ -50,7 +50,8 @@ Explanation: @sumOfSquares 3 4@ should be equal to @9 + 16@ and this
 is 25.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
-sumOfSquares x y = error "TODO!"
+sumOfSquares :: Int -> Int -> Int
+sumOfSquares x y = x * x + y * y
 
 {- | Implement a function that returns the last digit of a given number.
 
@@ -63,7 +64,10 @@ sumOfSquares x y = error "TODO!"
 
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
-lastDigit n = error "lastDigit: Not implemented!"
+
+
+lastDigit :: Int -> Int
+lastDigit n = abs (n `rem` 10)
 
 {- | Write a function that takes three numbers and returns the
 difference between the biggest number and the smallest one.
@@ -77,7 +81,8 @@ and 1 is the smallest, and 7 - 1 = 6.
 Try to use local variables (either let-in or where) to implement this
 function.
 -}
-minmax x y z = error "TODO"
+minmax :: Int -> Int -> Int -> Int
+minmax x y z = max x (max y z) - min x (min y z)
 
 {- | Implement a function that takes a string, start and end positions
 and returns a substring of a given string from the start position to
@@ -94,7 +99,24 @@ start position can be considered as zero (e.g. substring from the
 first character) and negative end position should result in an empty
 string.
 -}
-subString start end str = error "TODO"
+
+
+subString :: Int -> Int -> [Char] -> [Char]
+subString start end string = 
+    let 
+        rem_from_the_start = if start < 0
+                then 0
+                else start;
+        go :: Int -> Int -> [Char] -> [Char]
+        go remaining_from_the_start remaining_from_the_end str
+            | remaining_from_the_start > 0 = go (remaining_from_the_start - 1) remaining_from_the_end (tail str)
+            | remaining_from_the_end > 1 = go remaining_from_the_start (remaining_from_the_end - 1) (init str)
+            | otherwise = str
+    in 
+        if (end < 0) || (start > end) then "" else go 
+            rem_from_the_start
+            (length string - end) 
+            string
 
 {- | Write a function that takes a String — space separated numbers,
 and finds a sum of the numbers inside this string.
@@ -104,7 +126,18 @@ and finds a sum of the numbers inside this string.
 
 The string contains only spaces and/or numbers.
 -}
-strSum str = error "TODO"
+
+strSum :: [Char] -> Int
+strSum str = 
+    let
+        wordList = words str;
+        go :: [[Char]] -> Int
+        go list = if null list
+            then 0
+            else (read (head list) :: Int) + go (tail list)
+    in
+        go wordList
+
 
 {- | Write a function that takes a number and a list of numbers and
 returns a string, saying how many elements of the list are strictly
@@ -119,4 +152,21 @@ and lower than 6 elements (4, 5, 6, 7, 8 and 9).
 
 🕯 HINT: Use recursion to implement this function.
 -}
-lowerAndGreater n list = error "TODO"
+
+lowerAndGreater :: Int -> [Int] -> String
+lowerAndGreater n1 list1 = 
+    let
+        incTupleWithTwoValues :: Int -> (Int, Int) -> (Int, Int)
+        incTupleWithTwoValues pos (a, b) = if pos == 0 
+            then (a + 1, b)
+            else (a, b + 1) 
+        go :: Int -> [Int] -> (Int, Int) -> (Int, Int)
+        go n list currentState 
+            | null list = currentState
+            | n > head list = go n (tail list) (incTupleWithTwoValues 0 currentState)
+            | n < head list = go n (tail list) (incTupleWithTwoValues 1 currentState)
+            | otherwise = go n (tail list) currentState
+        getResultString :: Int -> (Int, Int) -> String
+        getResultString number (gr, lw) = unwords [show number, "is greater than", show gr, "elements and lower than", show lw, "elements"]
+    in
+        getResultString n1 (go n1 list1 (0, 0))
