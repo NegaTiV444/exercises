@@ -49,7 +49,7 @@ data Weekday
     | Friday
     | Saturday
     | Sunday
-    deriving (Show, Eq)
+    deriving (Show, Eq, Bounded, Enum) -- I didn't know if it's allowed to modify this, but I did it =)
 
 {- | Write a function that will display only the first three letters
 of a weekday.
@@ -57,7 +57,8 @@ of a weekday.
 >>> toShortString Monday
 "Mon"
 -}
-toShortString = error "TODO"
+toShortString :: Weekday -> String
+toShortString day = take 3 (show day)
 
 {- | Write a function that returns next day of the week, following the
 given day.
@@ -79,7 +80,10 @@ Tuesday
   would work for **any** enumeration type in Haskell (e.g. 'Bool',
   'Ordering') and not just 'Weekday'?
 -}
-next = error "TODO"
+next ::  (Eq a, Enum a, Bounded a) => a -> a
+next en 
+  | en == maxBound = minBound
+  | otherwise = succ en
 
 {- | Implement a function that calculates number of days from the first
 weekday to the second.
