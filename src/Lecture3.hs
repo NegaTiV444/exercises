@@ -93,8 +93,10 @@ weekday to the second.
 >>> daysTo Friday Wednesday
 5
 -}
-daysTo = error "TODO"
-
+daysTo :: (Eq a, Enum a, Bounded a) => a -> a -> Int
+daysTo from to 
+  | (fromEnum to) > (fromEnum from) = (fromEnum to) - (fromEnum from)
+  | otherwise = (fromEnum to) + (fromEnum (maxBound `asTypeOf` from)) - (fromEnum from) + 1
 {-
 
 In the following block of tasks you need to implement 'Semigroup'
