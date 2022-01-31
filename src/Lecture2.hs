@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {- |
 Module                  : Lecture2
 Copyright               : (c) 2021-2022 Haskell Beginners 2022 Course
@@ -39,6 +40,7 @@ module Lecture2
     , eval
     , constantFolding
     ) where
+import Text.Read
 
 {- | Implement a function that finds a product of all the numbers in
 the list. But implement a lazier version of this function: if you see
@@ -48,7 +50,11 @@ zero, you can stop calculating product and return 0 immediately.
 84
 -}
 lazyProduct :: [Int] -> Int
-lazyProduct = error "TODO"
+lazyProduct [] = 1
+lazyProduct [x] = x
+lazyProduct (0 : _) = 0
+lazyProduct (x : xs) = x * lazyProduct xs
+
 
 {- | Implement a function that duplicates every element in the list.
 
@@ -58,7 +64,9 @@ lazyProduct = error "TODO"
 "ccaabb"
 -}
 duplicate :: [a] -> [a]
-duplicate = error "TODO"
+duplicate [] = []
+duplicate [x] = [x, x]
+duplicate (x : xs) = x : x : duplicate xs
 
 {- | Implement function that takes index and a list and removes the
 element at the given position. Additionally, this function should also
@@ -67,10 +75,15 @@ return the removed element.
 >>> removeAt 0 [1 .. 5]
 (Just 1,[2,3,4,5])
 
+
 >>> removeAt 10 [1 .. 5]
 (Nothing,[1,2,3,4,5])
 -}
-removeAt = error "TODO"
+removeAt :: Int -> [a] -> (Maybe a, [a])
+removeAt x list =
+  if length list <= x || x < 0
+    then (Nothing , list)
+    else (Just(list!!x), take x list ++ drop (x + 1) list)
 
 {- | Write a function that takes a list of lists and returns only
 lists of even lengths.
@@ -81,7 +94,8 @@ lists of even lengths.
 ♫ NOTE: Use eta-reduction and function composition (the dot (.) operator)
   in this function.
 -}
-evenLists = error "TODO"
+evenLists :: [[a]] -> [[a]]
+evenLists = filter (even . length)
 
 {- | The @dropSpaces@ function takes a string containing a single word
 or number surrounded by spaces and removes all leading and trailing
@@ -97,7 +111,11 @@ spaces.
 
 🕯 HINT: look into Data.Char and Prelude modules for functions you may use.
 -}
-dropSpaces = error "TODO"
+dropSpaces :: String -> String
+dropSpaces [] = []
+dropSpaces (x : xs) = if x == ' '
+  then dropSpaces xs
+  else x : dropSpaces xs
 
 {- |
 
@@ -181,7 +199,12 @@ False
 True
 -}
 isIncreasing :: [Int] -> Bool
-isIncreasing = error "TODO"
+isIncreasing [] = True
+isIncreasing [_] = True
+isIncreasing [x, y] = x < y
+isIncreasing (x : y : xs) = x < y && isIncreasing xs
+
+
 
 {- | Implement a function that takes two lists, sorted in the
 increasing order, and merges them into new list, also sorted in the
@@ -194,7 +217,12 @@ verify that.
 [1,2,3,4,7]
 -}
 merge :: [Int] -> [Int] -> [Int]
-merge = error "TODO"
+merge [] [] = []
+merge [] y = y
+merge x [] = x
+merge (x : xs) (y : ys) = if x < y
+  then x : merge xs (y : ys)
+  else y : merge (x : xs) ys
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
@@ -211,7 +239,18 @@ The algorithm of merge sort is the following:
 [1,2,3]
 -}
 mergeSort :: [Int] -> [Int]
-mergeSort = error "TODO"
+mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort [x, y] =
+  if x > y
+  then [y, x]
+  else [x, y]
+mergeSort x =
+  let
+    len = length x
+    listTuple = splitAt (len `div` 2) x
+  in
+    merge (mergeSort (fst listTuple)) (mergeSort (snd listTuple))
 
 
 {- | Haskell is famous for being a superb language for implementing
@@ -264,7 +303,20 @@ data EvalError
 It returns either a successful evaluation result or an error.
 -}
 eval :: Variables -> Expr -> Either EvalError Int
-eval = error "TODO"
+eval vars expr=
+  let
+    go :: Variables -> Expr -> Either EvalError Int
+    go vars (Lit lit) = Right lit 
+    go vars (Var var) = case (lookup var vars) of
+      Just value -> Right value
+      Nothing -> Left (VariableNotFound var)
+    go vars (Add e1 e2) = case (go vars e1) of 
+      Right val1 -> case (go vars e2) of
+        Right val2 -> Right (val2 + val1)
+        Left (VariableNotFound var) -> Left (VariableNotFound var)
+      Left (VariableNotFound var) -> Left (VariableNotFound var)
+  in
+    go vars (constantFolding expr)
 
 {- | Compilers also perform optimizations! One of the most common
 optimizations is "Constant Folding". It performs arithmetic operations
@@ -288,4 +340,32 @@ Write a function that takes and expression and performs "Constant
 Folding" optimization on the given expression.
 -}
 constantFolding :: Expr -> Expr
-constantFolding = error "TODO"
+constantFolding (Lit lit) = Lit lit
+constantFolding (Var var) = Var var
+constantFolding (Add (Lit lit1) (Lit lit2)) = Lit (lit1 + lit2)
+constantFolding (Add (Var var) (Lit 0)) = Var var
+constantFolding (Add (Lit 0) (Var s)) = Var s
+constantFolding (Add (Var var) (Lit lit)) = Add (Var var) (Lit lit)
+constantFolding (Add (Lit lit) (Var var)) = Add (Lit lit) (Var var)
+constantFolding (Add e1 e2) = 
+  let
+    go :: ([String], Int) -> Expr -> ([String], Int)
+    go (varList, litSum) (Lit lit) = (varList, (litSum + lit))
+    go (varList, litSum) (Var var) = (var : varList, litSum)
+    go (varList, litSum) (Add (Lit lit1) (Lit lit2)) = (varList, litSum + lit1 + lit2)
+    go (varList, litSum) (Add (Var var1) (Var var2)) = (var1 : var2 : varList, litSum)
+    go (varList, litSum) (Add (Var var) (Lit lit)) = (var : varList, litSum + lit)
+    go (varList, litSum) (Add (Lit lit) (Var var)) = (var : varList, litSum + lit)
+    go state (Add e1 e2) = go (go state e1) e2
+
+    currentStateToExpr :: ([String], Int) -> Expr -> Expr
+    currentStateToExpr ([], 0) expr = expr
+    currentStateToExpr ([], litSum) expr = Add (Lit litSum) expr
+    currentStateToExpr (x : xs, litSum) expr = Add (Var x) (currentStateToExpr (xs, litSum) expr)
+
+    convert :: ([String], Int) -> Expr
+    convert ([], litSum) = Lit litSum
+    convert (x : xs, litSum) = currentStateToExpr (xs, litSum) (Var x)
+  in
+    convert (go ([], 0) (Add e1 e2))
+
